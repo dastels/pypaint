@@ -12,9 +12,9 @@ Licensed under the MIT license.
 All text above must be included in any redistribution.
 """
 
-#pylint:disable=inval;id-name
+#pylint:disable=invalid-name, no-self-use
+
 import gc
-import math
 import time
 import board
 import displayio
@@ -45,6 +45,8 @@ class Color(object):
 
     def __init__(self):
         pass
+
+################################################################################
 
 class TouchscreenPoller(object):
     """Get 'pressed' and location updates from a touch screen device."""
@@ -86,6 +88,8 @@ class TouchscreenPoller(object):
         """Force a bitmap refresh."""
         pass
 
+################################################################################
+
 class CursorPoller(object):
     """Get 'pressed' and location updates from a D-Pad/joystick device."""
 
@@ -102,7 +106,6 @@ class CursorPoller(object):
         location = None
         self._cursor.update()
         button = self._cursor.held
-        self._logger.debug('Poll: button A: %s', button)
         if button:
             location = (self._mouse_cursor.x + self._x_offset, self._mouse_cursor.y + self._y_offset)
         return button, location
@@ -112,6 +115,7 @@ class CursorPoller(object):
         self._mouse_cursor.hide()
         self._mouse_cursor.show()
 
+################################################################################
 
 class Paint(object):
 
@@ -175,7 +179,6 @@ class Paint(object):
     #pylint:disable=no-self-use
     def _cursor_bitmap(self):
         bmp = displayio.Bitmap(20, 20, 3)
-        # left edge, outline
         for i in range(0, bmp.height):
             bmp[0, i] = 1
             bmp[bmp.width - 1, i] = 1
@@ -183,7 +186,6 @@ class Paint(object):
             bmp[i, 0] = 1
             bmp[i, bmp.height - 1] = 1
         return bmp
-    #pylint:enable=no-self-use
 
     def _plot(self, x, y, c):
         try:
@@ -284,7 +286,6 @@ class Paint(object):
     def _update(self):
         self._last_pressed, self._last_location = self._pressed, self._location
         self._pressed, self._location = self._poller.poll()
-        self._logger.debug('Update: %s->%s, %s->%s', str(self._last_pressed), str(self._pressed), str(self._last_location), str(self._location))
 
 
     def run(self):
