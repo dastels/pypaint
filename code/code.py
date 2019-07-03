@@ -80,15 +80,19 @@ class TouchscreenPoller(object):
 
         p = self._touchscreen.touch_point
         if p is not None:
-            self._display_grp.remove(self._cursor_grp)
             self._cursor_grp.x = p[0] - self._x_offset
             self._cursor_grp.y = p[1] - self._y_offset
-            self._display_grp.append(self._cursor_grp)
-        return p is not None, p
+            return True, p
+        else:
+            return False, None
 
-    def poke(self):
+    def poke(self, location=None):
         """Force a bitmap refresh."""
-        pass
+        self._display_grp.remove(self._cursor_grp)
+        if location is not None:
+            self._cursor_grp.x = location[0] - self._x_offset
+            self._cursor_grp.y = location[1] - self._y_offset
+        self._display_grp.append(self._cursor_grp)
 
 ################################################################################
 
@@ -112,7 +116,7 @@ class CursorPoller(object):
             location = (self._mouse_cursor.x + self._x_offset, self._mouse_cursor.y + self._y_offset)
         return button, location
 
-    def poke(self):
+    def poke(self, x=None, y=None):
         """Force a bitmap refresh."""
         self._mouse_cursor.hide()
         self._mouse_cursor.show()
@@ -166,7 +170,6 @@ class Paint(object):
         gc.collect()
         self._display.wait_for_frame()
 
-        self._touchscreen = None
         if hasattr(board, 'TOUCH_XL'):
             self._poller = TouchscreenPoller(self._splash, self._cursor_bitmap())
         elif hasattr(board, 'BUTTON_CLOCK'):
@@ -251,7 +254,7 @@ class Paint(object):
                     pass
                 self._x = y0
                 self._y = x0
-                # self._drawturtle()
+                self._poller.poke((int(y0), int(x0)))
                 time.sleep(0.003)
             else:
                 try:
@@ -260,7 +263,7 @@ class Paint(object):
                     pass
                 self._x = x0
                 self._y = y0
-                # self._drawturtle()
+                self._poller.poke((int(x0), int(y0)))
                 time.sleep(0.003)
             err -= dy
             if err < 0:
@@ -325,7 +328,6 @@ class Paint(object):
             if self._did_move and self._pressed:
                 self._handle_motion(self._last_location, self._location)
             time.sleep(0.1)
-
 
 painter = Paint()
 painter.run()
