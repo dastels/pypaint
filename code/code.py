@@ -56,8 +56,10 @@ class TouchscreenPoller(object):
         self._display_grp = splash
         self._touchscreen = adafruit_touchscreen.Touchscreen(board.TOUCH_XL, board.TOUCH_XR,
                                                              board.TOUCH_YD, board.TOUCH_YU,
-                                                             calibration=((5200, 59000),
-                                                                          (5800, 57000)),
+                                                             calibration=((9000, 59000),
+                                                                          (8000, 57000)),
+                                                             # calibration=((5200, 59000),
+                                                             #              (5800, 57000)),
                                                              size=(320, 240))
         self._cursor_grp = displayio.Group(max_size=1)
         self._cur_palette = displayio.Palette(3)
