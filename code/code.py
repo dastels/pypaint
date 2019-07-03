@@ -49,18 +49,37 @@ class Color(object):
 class TouchscreenPoller(object):
     """Get 'pressed' and location updates from a touch screen device."""
 
-    def __init__(self):
+    def __init__(self, splash, cursor_bmp):
         logging.getLogger('Paint').debug('Creating a TouchscreenPoller')
+        self._display_grp = splash
         self._touchscreen = adafruit_touchscreen.Touchscreen(board.TOUCH_XL, board.TOUCH_XR,
                                                              board.TOUCH_YD, board.TOUCH_YU,
                                                              calibration=((5200, 59000),
                                                                           (5800, 57000)),
                                                              size=(320, 240))
+        self._cursor_grp = displayio.Group(max_size=1)
+        self._cur_palette = displayio.Palette(3)
+        self._cur_palette.make_transparent(0)
+        self._cur_palette[1] = 0xFFFFFF
+        self._cur_palette[2] = 0x0000
+        self._cur_sprite = displayio.TileGrid(cursor_bmp,
+                                              pixel_shader=self._cur_palette)
+        self._cursor_grp.append(self._cur_sprite)
+        self._display_grp.append(self._cursor_grp)
+        self._x_offset = cursor_bmp.width // 2
+        self._y_offset = cursor_bmp.height // 2
+
+
 
     def poll(self):
         """Check for changes. Returns contact (a bool) and it's location ((x,y) or None)"""
 
         p = self._touchscreen.touch_point
+        if p is not None:
+            self._display_grp.remove(self._cursor_grp)
+            self._cursor_grp.x = p[0] - self._x_offset
+            self._cursor_grp.y = p[1] - self._y_offset
+            self._display_grp.append(self._cursor_grp)
         return p is not None, p
 
     def poke(self):
@@ -70,25 +89,13 @@ class TouchscreenPoller(object):
 class CursorPoller(object):
     """Get 'pressed' and location updates from a D-Pad/joystick device."""
 
-    def __init__(self, splash):
+    def __init__(self, splash, cursor_bmp):
         logging.getLogger('Paint').debug('Creating a CursorPoller')
-        cursor_bmp = self._cursor_bitmap()
         self._mouse_cursor = Cursor(board.DISPLAY, display_group=splash, bmp=cursor_bmp, cursor_speed=2)
         self._x_offset = cursor_bmp.width // 2
         self._y_offset = cursor_bmp.height // 2
         self._cursor = DebouncedCursorManager(self._mouse_cursor)
         self._logger = logging.getLogger('Paint')
-
-    def _cursor_bitmap(self):
-        bmp = displayio.Bitmap(20, 20, 3)
-        # left edge, outline
-        for i in range(0, bmp.height):
-            bmp[0, i] = 1
-            bmp[bmp.width - 1, i] = 1
-        for i in range(0, bmp.width):
-            bmp[i, 0] = 1
-            bmp[i, bmp.height - 1] = 1
-        return bmp
 
     def poll(self):
         """Check for changes. Returns press (a bool) and it's location ((x,y) or None)"""
@@ -152,9 +159,9 @@ class Paint(object):
 
         self._touchscreen = None
         if hasattr(board, 'TOUCH_XL'):
-            self._poller = TouchscreenPoller()
+            self._poller = TouchscreenPoller(self._splash, self._cursor_bitmap())
         elif hasattr(board, 'BUTTON_CLOCK'):
-            self._poller = CursorPoller(self._splash)
+            self._poller = CursorPoller(self._splash, self._cursor_bitmap())
         else:
             raise AttributeError('PYOA requires a touchscreen or cursor.')
 
@@ -164,6 +171,19 @@ class Paint(object):
         self._last_location = None
 
         self._pencolor = 7
+
+    #pylint:disable=no-self-use
+    def _cursor_bitmap(self):
+        bmp = displayio.Bitmap(20, 20, 3)
+        # left edge, outline
+        for i in range(0, bmp.height):
+            bmp[0, i] = 1
+            bmp[bmp.width - 1, i] = 1
+        for i in range(0, bmp.width):
+            bmp[i, 0] = 1
+            bmp[i, bmp.height - 1] = 1
+        return bmp
+    #pylint:enable=no-self-use
 
     def _plot(self, x, y, c):
         try:
