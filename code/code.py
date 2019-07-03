@@ -128,7 +128,7 @@ class Paint(object):
         self._x = self._w // 2
         self._y = self._h // 2
 
-        self._splash = displayio.Group(max_size=4)
+        self._splash = displayio.Group(max_size=5)
 
         self._bg_bitmap = displayio.Bitmap(self._w, self._h, 1)
         self._bg_palette = displayio.Palette(1)
@@ -147,7 +147,7 @@ class Paint(object):
                                              x=0, y=0)
         self._splash.append(self._palette_sprite)
 
-        self._fg_bitmap = displayio.Bitmap(self._w, self._h, 5)
+        self._fg_bitmap = displayio.Bitmap((9 * self._w) // 10, self._h, 5)
         self._fg_palette = displayio.Palette(len(Color.colors))
         for i, c in enumerate(Color.colors):
             self._fg_palette[i] = c
@@ -155,6 +155,9 @@ class Paint(object):
                                              pixel_shader=self._fg_palette,
                                              x=0, y=0)
         self._splash.append(self._fg_sprite)
+
+        self._color_palette = self._make_color_palette()
+        self._splash.append(self._color_palette)
 
         self._display.show(self._splash)
         self._display.refresh_soon()
@@ -176,7 +179,23 @@ class Paint(object):
 
         self._pencolor = 7
 
-    #pylint:disable=no-self-use
+    def _make_color_palette(self):
+        self._palette_bitmap = displayio.Bitmap(self._w // 10, self._h, 5)
+        self._palette_palette = displayio.Palette(len(Color.colors))
+        swatch_height = self._h // len(Color.colors)
+        for i, c in enumerate(Color.colors):
+            self._palette_palette[i] = c
+            for y in range(swatch_height):
+                for x in range(self._w // 10):
+                    self._palette_bitmap[x, swatch_height * i + y] = i
+                self._palette_bitmap[self._w // 10 - 1, swatch_height * i + y] = 7
+
+
+        return displayio.TileGrid(self._palette_bitmap,
+                                             pixel_shader=self._palette_palette,
+                                             x=0, y=0)
+
+
     def _cursor_bitmap(self):
         bmp = displayio.Bitmap(20, 20, 3)
         for i in range(0, bmp.height):
@@ -256,14 +275,22 @@ class Paint(object):
     #pylint:enable=too-many-branches,too-many-statements
 
 
+    def _pick_color(self, location):
+        swatch_height = self._h // len(Color.colors)
+        picked = location[1] // swatch_height
+        self._pencolor = picked
+
     def _handle_motion(self, start, end):
         self._logger.debug('Moved: (%d, %d) -> (%d, %d)', start[0], start[1], end[0], end[1])
         self._goto(start, end)
 
     def _handle_press(self, location):
         self._logger.debug('Pressed!')
-        self._plot(location[0], location[1], self._pencolor)
-        self._poller.poke()
+        if location[0] < self._w // 10:   # in color picker
+            self._pick_color(location)
+        else:
+            self._plot(location[0], location[1], self._pencolor)
+            self._poller.poke()
 
     def _handle_release(self, location):
         self._logger.debug('Released!')
