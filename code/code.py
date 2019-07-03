@@ -195,15 +195,12 @@ class Paint(object):
                                              pixel_shader=self._palette_palette,
                                              x=0, y=0)
 
-
     def _cursor_bitmap(self):
-        bmp = displayio.Bitmap(20, 20, 3)
-        for i in range(0, bmp.height):
-            bmp[0, i] = 1
-            bmp[bmp.width - 1, i] = 1
-        for i in range(0, bmp.width):
-            bmp[i, 0] = 1
-            bmp[i, bmp.height - 1] = 1
+        bmp = displayio.Bitmap(9, 9, 3)
+        for i in range(9):
+            bmp[4, i] = 1
+            bmp[i, 4] = 1
+        bmp[4, 4] = 0
         return bmp
 
     def _plot(self, x, y, c):
