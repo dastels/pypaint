@@ -58,8 +58,6 @@ class TouchscreenPoller(object):
                                                              board.TOUCH_YD, board.TOUCH_YU,
                                                              calibration=((9000, 59000),
                                                                           (8000, 57000)),
-                                                             # calibration=((5200, 59000),
-                                                             #              (5800, 57000)),
                                                              size=(320, 240))
         self._cursor_grp = displayio.Group(max_size=1)
         self._cur_palette = displayio.Palette(3)
@@ -76,7 +74,7 @@ class TouchscreenPoller(object):
 
 
     def poll(self):
-        """Check for changes. Returns contact (a bool) and it's location ((x,y) or None)"""
+        """Check for input. Returns contact (a bool) and it's location ((x,y) or None)"""
 
         p = self._touchscreen.touch_point
         if p is not None:
@@ -108,7 +106,7 @@ class CursorPoller(object):
         self._logger = logging.getLogger('Paint')
 
     def poll(self):
-        """Check for changes. Returns press (a bool) and it's location ((x,y) or None)"""
+        """Check for input. Returns press (a bool) and it's location ((x,y) or None)"""
         location = None
         self._cursor.update()
         button = self._cursor.held
@@ -153,7 +151,7 @@ class Paint(object):
                                              x=0, y=0)
         self._splash.append(self._palette_sprite)
 
-        self._fg_bitmap = displayio.Bitmap((9 * self._w) // 10, self._h, 5)
+        self._fg_bitmap = displayio.Bitmap(self._w, self._h, 5)
         self._fg_palette = displayio.Palette(len(Color.colors))
         for i, c in enumerate(Color.colors):
             self._fg_palette[i] = c
